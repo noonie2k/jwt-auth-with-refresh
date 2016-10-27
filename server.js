@@ -1,77 +1,38 @@
-const express    = require('express')
 const bodyParser = require('body-parser')
-const jwt        = require('jsonwebtoken')
+const express    = require('express')
 const expressJWT = require('express-jwt')
+const jwt        = require('jsonwebtoken')
 const moment     = require('moment')
+const path       = require('path')
 
 let app = express()
 app.use(bodyParser.json())
 
-const corsAllowAll = (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:8080')
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-  res.header('Access-Control-Expose-Headers', 'X-Access-Token,X-Refresh-Token')
+const cors = require(path.join(__dirname, 'config', 'cors.js'))
+app.use(cors)
 
-  next()
-}
-app.use(corsAllowAll)
+app.set('JWT_SECRET', 'F2AA449CDD544FA2AD185882441AC')
+app.use(expressJWT({ secret: app.get('JWT_SECRET') }).unless({
+  path: [
+    { url: /\/api\/v1\/user\/.+/,       methods: ['POST'] },
+    { url: '/api/v1/auth',              methods: ['POST'] },
+    { url: '/api/v1/data/unrestricted', methods: ['GET'] }
+  ]
+}))
 
-const JWT_SECRET = 'F2AA449CDD544FA2AD185882441AC'
-app.use(expressJWT({ secret: JWT_SECRET }).unless({ path: ['/api/v1/auth', '/api/v1/unrestricted'] }))
 app.use((err, req, res, next) => {
   if (err.name === 'UnauthorizedError') {
     res.sendStatus(401)
   }
 })
 
-app.post('/api/v1/auth', (req, res) => {
-  if (req.body.username === 'noonie2k' && req.body.password === 'abc123') {
-    let accessToken = jwt.sign(
-      { username: req.body.username },
-      JWT_SECRET,
-      { expiresIn: moment().add(10, 'minutes').unix() }
-    )
+/**
+ * Database
+ */
+const nedb = require('nedb')
+const userDb = new nedb({ filename: path.join(__dirname, 'data', 'user.db'), autoload: true })
 
-    let refreshToken = jwt.sign(
-      { username: req.body.username },
-      JWT_SECRET,
-      { expiresIn: moment().add(14, 'days').unix() }
-    )
-
-    res.set('X-Access-Token', accessToken)
-    res.set('X-Refresh-Token', refreshToken)
-    res.sendStatus(204)
-  } else {
-    res.sendStatus(401)
-  }
-})
-
-app.post('/api/v1/refresh', (req, res) => {
-  let accessToken = jwt.sign(
-    { username: req.body.username },
-    JWT_SECRET,
-    { expiresIn: moment().add(10, 'minutes').unix() }
-  )
-
-  let refreshToken = jwt.sign(
-    { username: req.body.username },
-    JWT_SECRET,
-    { expiresIn: moment().add(14, 'days').unix() }
-  )
-
-  res.set('X-Access-Token', accessToken)
-  res.set('X-Refresh-Token', refreshToken)
-  res.sendStatus(204)
-})
-
-app.get('/api/v1/unrestricted', (req, res) => {
-  res.json({ data: 'unrestricted' })
-})
-
-app.get('/api/v1/restricted', (req, res) => {
-  res.json({ data: 'restricted' })
-})
+require(path.join(__dirname, 'routes', 'api.js'))(app, userDb)
 
 app.listen(8081, () => {
   console.log('Listening on 8081')

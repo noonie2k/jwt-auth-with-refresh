@@ -14,10 +14,13 @@
   },
   "dependencies": {
     "body-parser": "^1.15.2",
+    "eslint-plugin-promise": "^2.0.1",
     "express": "^4.14.0",
     "express-jwt": "^5.1.0",
     "jsonwebtoken": "^7.1.9",
     "moment": "^2.15.2",
+    "nedb": "^1.8.0",
+    "node-forge": "^0.6.44",
     "vue": "^2.0.1",
     "vue-cookie": "^1.0.0",
     "vue-resource": "^1.0.3"
