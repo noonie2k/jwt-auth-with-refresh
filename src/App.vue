@@ -1,7 +1,5 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
-    <hello></hello>
     <auth-test></auth-test>
   </div>
 </template>
