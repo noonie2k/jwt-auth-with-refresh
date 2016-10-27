@@ -40,7 +40,6 @@ Vue.http.interceptors.push((request, next) => {
         return response
       })
     } else {
-      console.log('original response')
       return response
     }
   })
