@@ -23,22 +23,21 @@ Vue.http.interceptors.push((request, next) => {
 
     // Check for invalid/expired access token (results in 401)
     if (response.status === 401 && refreshToken) {
-
       // Attempt to obtain a new Access Token using the Refresh Token
       return AuthService.refresh(refreshToken)
-      .then((refreshResponse) => {
-        let newAccessToken = VueCookie.get('auth-access')
+        .then((refreshResponse) => {
+          let newAccessToken = VueCookie.get('auth-access')
 
-        // Set the Authorization header on the original request with the new Access Token
-        request.headers.set('Authorization', `Bearer ${newAccessToken}`)
+          // Set the Authorization header on the original request with the new Access Token
+          request.headers.set('Authorization', `Bearer ${newAccessToken}`)
 
-        // Execute and return a new attempt at the original request
-        return Vue.http(request)
-      })
-      .catch((err) => {
-        // User doesn't have a valid Refresh Token; return the original response (401)
-        return response
-      })
+          // Execute and return a new attempt at the original request
+          return Vue.http(request)
+        })
+        .catch(() => {
+          // User doesn't have a valid Refresh Token; return the original response (401)
+          return response
+        })
     } else {
       return response
     }
